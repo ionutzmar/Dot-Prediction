@@ -1,129 +1,88 @@
 #include <iostream>
+#include <new>
 
 using namespace std;
 
 float firstHypothesisCoefficient = 0;
 float secondHypothesisCoefficient = 0;
+int numberOfExamples;
+float *examplesX;
+float *examplesY;
+int trainingsNumber = 5000;
+float learningFactor = 0.001;
 
-class Example
-{
-
-private:
-
-	int _examplesNumber;
-	float *pDataX;
-	float *pDataY;
-	//int dim_1;
-	//int dim_2;
-public:
-
-	Example(int cinExamplesNumber)
-	{
-
-		_examplesNumber = cinExamplesNumber;
-		float dataX[_examplesNumber];
-		float dataY[_examplesNumber];
-		pDataX = dataX;
-		pDataY = dataY;
-
-	//float myArray [][]=new float [dim_1][dim_2];
-
-		
-	};
-
-	~Example()
-	{
-		//
-	};
-
-	int getExamplesNumber()
-	{
-		return _examplesNumber;
-	};
-
-	void setX(int i, float x)
-	{
-		*(pDataX + i) = x;
-		cout << *(pDataX + i) << "\n";
-	};
-
-	void setY(int i, float y)
-	{
-		*(pDataY + i) = y;
-		cout << *(pDataY + i) << "\n";
-		cout << *(pDataX + i) << "\n";
-	};
-
-	float getExample(int axis, int i)
-	{
-		if (axis == 0)
-			return *(pDataX + i);
-		else
-			return *(pDataY + i);
-	}
-
-	// float getData()
-	// {
-	// 	return *dataNumbers[2][2];
-	// };
-
-
-
-
-};
+float hypothesis(float x, float a = firstHypothesisCoefficient, float b = secondHypothesisCoefficient);
+float sumFunction(float a, float b);
 
 int main(void)
 {
-
-	int numberOfExamples;
+	
 	cout << "This program is trying to predict values based on examples. Now give me the number of examples: \n";
 	cin >> numberOfExamples;
 	cout << "\n";
 
-	Example examples(numberOfExamples);
+	examplesX = new (nothrow) float [numberOfExamples];
+	examplesY = new (nothrow) float [numberOfExamples];
 
 	cout << "Now give me the examples:";
 	cout << "\n";
-	for (int i = 0; i < examples.getExamplesNumber(); i++)
+	for (int i = 0; i < numberOfExamples; i++)
 	{
 		float x;
 		float y;
 		cout << "x: ";
 		cin >> x;
-		examples.setX(i, x);
+		examplesX[i] = x;
 		cout << "\n";
 		cout << "y: ";
 		cin >> y;
-		examples.setY(i, y);
+		examplesY[i] = y;
 		cout << "\n";
 	}
 
-	//cout << examples.getExample(0, 0) << "\n";
-
-	for (int i = 0; i < examples.getExamplesNumber(); i++)
+	for (int i = 0; i < numberOfExamples; i++)
 	{
-		cout << examples.getExample(0, i) << "\n";
-		cout << examples.getExample(1, i) << "\n";
+		cout << examplesX[i] << "\n";
+		cout << examplesY[i] << "\n";
 	}
-	// cout << examples.getData();
+
+	for (int q = 0; q < trainingsNumber; q++)
+	{
+		float derivativeA = 0;
+		float derivativeB = 0;
+		for (int i = 0; i < numberOfExamples; i++)
+		{
+			derivativeA += hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) * examplesX[i];
+			derivativeB += hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient);
+		}
+		derivativeA /= numberOfExamples;
+		derivativeB /= numberOfExamples;
+		firstHypothesisCoefficient -= learningFactor * derivativeA;
+		secondHypothesisCoefficient -= learningFactor * derivativeB;
+	}
+
+	cout << "\n" << "First coefficient: " << firstHypothesisCoefficient << "\n" << "Second coefficinet: " << secondHypothesisCoefficient << "\n" << "SumFunction: " << sumFunction(firstHypothesisCoefficient, secondHypothesisCoefficient) << "\n";
 	return 0;
+
+
 }
 
-// float hypothesis(float x, float a = firstHypothesisCoefficient, float b = secondHypothesisCoefficient)
-// {
-// 	return a * x + b;
-// }
+float hypothesis(float x, float a, float b)
+{
+	return a * x + b;
+}
 
-// float sumFunction(float a, float b, float x)
-// {
-// 	float sum = 0;
+float sumFunction(float a, float b)
+{
+	float sum = 0;
 
-// 	for (int i = 0; i < examplesNumber; i++)
-// 	{
-// 		sum += hypothesis(main::examples[0][i] - main::examples[1][i]);
-// 	}
+	for (int i = 0; i < numberOfExamples; i++)
+	{
+		sum += (hypothesis(examplesX[i], a, b) - examplesY[i]) * (hypothesis(examplesX[i], a, b) - examplesY[i]);
+		cout << sum << "\n";
+	}
 
-// 	sum = examplesNumber;
+	sum = sum / ( 2 * numberOfExamples);
 
-// 	return sum;
-// }
+	return sum;
+}
