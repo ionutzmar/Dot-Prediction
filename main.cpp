@@ -8,8 +8,8 @@ float secondHypothesisCoefficient = 0;
 int numberOfExamples;
 float *examplesX;
 float *examplesY;
-int trainingsNumber = 5000;
-float learningFactor = 0.001;
+int trainingsNumber = 50;
+float learningFactor = 0.01;
 
 float hypothesis(float x, float a = firstHypothesisCoefficient, float b = secondHypothesisCoefficient);
 float sumFunction(float a, float b);
@@ -40,11 +40,11 @@ int main(void)
 		cout << "\n";
 	}
 
-	for (int i = 0; i < numberOfExamples; i++)
-	{
-		cout << examplesX[i] << "\n";
-		cout << examplesY[i] << "\n";
-	}
+	// for (int i = 0; i < numberOfExamples; i++)
+	// {
+	// 	cout << examplesX[i] << "\n";
+	// 	cout << examplesY[i] << "\n";
+	// }
 
 	for (int q = 0; q < trainingsNumber; q++)
 	{
@@ -52,11 +52,11 @@ int main(void)
 		float derivativeB = 0;
 		for (int i = 0; i < numberOfExamples; i++)
 		{
-			derivativeA += hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) * examplesX[i];
-			derivativeB += hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient);
+			derivativeA += ( hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) - examplesY[i] ) * examplesX[i];
+			derivativeB += hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) - examplesY[i];
 		}
-		derivativeA /= numberOfExamples;
-		derivativeB /= numberOfExamples;
+		derivativeA = derivativeA / numberOfExamples;
+		derivativeB = derivativeB / numberOfExamples;
 		firstHypothesisCoefficient -= learningFactor * derivativeA;
 		secondHypothesisCoefficient -= learningFactor * derivativeB;
 	}
@@ -79,7 +79,7 @@ float sumFunction(float a, float b)
 	for (int i = 0; i < numberOfExamples; i++)
 	{
 		sum += (hypothesis(examplesX[i], a, b) - examplesY[i]) * (hypothesis(examplesX[i], a, b) - examplesY[i]);
-		cout << sum << "\n";
+		//cout << sum << "\n";
 	}
 
 	sum = sum / ( 2 * numberOfExamples);
