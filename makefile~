@@ -1,0 +1,6 @@
+build:
+	g++ main.cpp -o DotPrediction -lGL -lglut -Wall
+run:
+	./DotPrediction
+clear:
+	rm DotPrediction

@@ -1,5 +1,5 @@
 build:
-	g++ main.cpp -o DotPrediction -Wall
+	g++ main.cpp -o DotPrediction -lGLU -lGL -lglut -Wall
 run:
 	./DotPrediction
 clear:
