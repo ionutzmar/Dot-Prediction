@@ -1,36 +1,49 @@
 #include <iostream>
 #include <new>
 #include <GL/glut.h>
-
-#include <time.h>
-#include <stdlib.h>
+#include <fstream>
 
 using namespace std;
 
-float firstHypothesisCoefficient = 0;
-float secondHypothesisCoefficient = 0;
+double firstHypothesisCoefficient = 0;
+double secondHypothesisCoefficient = 0;
 int numberOfExamples;
-float *examplesX;
-float *examplesY;
+double *examplesX;
+double *examplesY;
 int w, h;
-int trainingsNumber = 5000;
-float learningFactor = 0.01;
+int trainingsNumber = 50000;
+double learningFactor = 0.00001;
 
-float hypothesis(float x, float a = firstHypothesisCoefficient, float b = secondHypothesisCoefficient);
-float sumFunction(float a, float b);
-
+double hypothesis(double x, double a = firstHypothesisCoefficient, double b = secondHypothesisCoefficient);
+double sumFunction(double a, double b);
 
 void display(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glLoadIdentity();
 
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINES);
+		//glVertex2f(0, -f(-w / 2) + h / 2);
+		//glVertex2f(w, -f(w / 2) + h / 2);
+		glVertex2f(0, h - hypothesis(0, firstHypothesisCoefficient, secondHypothesisCoefficient));
+		glVertex2f(w, h - hypothesis(w, firstHypothesisCoefficient, secondHypothesisCoefficient));
+	glEnd();
+
 	glColor3f(1, 0, 0);
 
 	for (int r = 0; r < numberOfExamples; r++)
 	{
 		glBegin(GL_POINTS);
-		glVertex2f(examplesX[r], examplesY[r]);
+		glVertex2f(examplesX[r], h - examplesY[r]);
+		glVertex2f(examplesX[r] - 1, h - examplesY[r] - 1);
+		glVertex2f(examplesX[r] - 1, h - examplesY[r]);
+		glVertex2f(examplesX[r] - 1, h - examplesY[r] + 1);
+		glVertex2f(examplesX[r], h - examplesY[r] + 1);
+		glVertex2f(examplesX[r], h - examplesY[r] - 1);
+		glVertex2f(examplesX[r] + 1, h - examplesY[r] - 1);
+		glVertex2f(examplesX[r] + 1, h - examplesY[r]);
+		glVertex2f(examplesX[r] + 1, h - examplesY[r] + 1);
 		glEnd();
 	}
 
@@ -76,27 +89,54 @@ int main(int argc, char *argv[])
 {
 	
 	cout << "This program is trying to predict values based on examples. Now give me the number of examples: \n";
-	cin >> numberOfExamples;
+	//cin >> numberOfExamples; //////////////////////////////////////////////////////////////////////////////////////////// Se decomenteaza AICI
+	
+	numberOfExamples = 4;
+
+	examplesX = new double [numberOfExamples];
+	examplesY = new double [numberOfExamples];
+	
+	int times = 0;
+	double n;
+	int counter = 0;
+	ifstream f("exemple.txt");
+	while (f >> n)
+	{
+		cout << n << "\n";
+		if (counter == 0)
+		{
+			examplesX[times / 2] = n;
+			counter = 1;
+		}
+		else
+		{
+			examplesY[(times - 1) / 2] = n;
+			counter = 0;
+		}
+		times++;
+	}
+	f.close();
+
 	cout << "\n";
 
-	examplesX = new float [numberOfExamples];
-	examplesY = new float [numberOfExamples];
+
 
 	cout << "Now give me the examples:";
 	cout << "\n";
-	for (int i = 0; i < numberOfExamples; i++)
-	{
-		float x;
-		float y;
-		cout << "x: ";
-		cin >> x;
-		examplesX[i] = x;
-		cout << "\n";
-		cout << "y: ";
-		cin >> y;
-		examplesY[i] = y;
-		cout << "\n";
-	}
+
+	// for (int i = 0; i < numberOfExamples; i++) //////////////////////////////////////////////// Se decomenteaza AICI
+	// {
+	// 	double x;
+	// 	double y;
+	// 	cout << "x: ";
+	// 	cin >> x;
+	// 	examplesX[i] = x;
+	// 	cout << "\n";
+	// 	cout << "y: ";
+	// 	cin >> y;
+	// 	examplesY[i] = y;
+	// 	cout << "\n";
+	// }
 
 	// for (int i = 0; i < numberOfExamples; i++)
 	// {
@@ -104,10 +144,15 @@ int main(int argc, char *argv[])
 	// 	cout << examplesY[i] << "\n";
 	// }
 
+
+
 	for (int q = 0; q < trainingsNumber; q++)
 	{
-		float derivativeA = 0;
-		float derivativeB = 0;
+		double derivativeA = 0;
+		double derivativeB = 0;
+
+		//cout << firstHypothesisCoefficient << "\n";
+
 		for (int i = 0; i < numberOfExamples; i++)
 		{
 			derivativeA += ( hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) - examplesY[i] ) * examplesX[i];
@@ -120,6 +165,8 @@ int main(int argc, char *argv[])
 	}
 
 	cout << "\n" << "First coefficient: " << firstHypothesisCoefficient << "\n" << "Second coefficinet: " << secondHypothesisCoefficient << "\n" << "SumFunction: " << sumFunction(firstHypothesisCoefficient, secondHypothesisCoefficient) << "\n";
+
+
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
@@ -140,14 +187,14 @@ int main(int argc, char *argv[])
 
 
 
-float hypothesis(float x, float a, float b)
+double hypothesis(double x, double a, double b)
 {
 	return a * x + b;
 }
 
-float sumFunction(float a, float b)
+double sumFunction(double a, double b)
 {
-	float sum = 0;
+	double sum = 0;
 
 	for (int i = 0; i < numberOfExamples; i++)
 	{
