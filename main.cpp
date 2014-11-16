@@ -2,12 +2,13 @@
 #include <new>
 #include <GL/glut.h>
 #include <fstream>
+#include <string>
 
 using namespace std;
 
 double firstHypothesisCoefficient = 0;
 double secondHypothesisCoefficient = 0;
-int numberOfExamples;
+int numberOfExamples = 1;
 double *examplesX;
 double *examplesY;
 int w, h;
@@ -24,8 +25,6 @@ void display(void)
 
 	glColor3f(1, 1, 1);
 	glBegin(GL_LINES);
-		//glVertex2f(0, -f(-w / 2) + h / 2);
-		//glVertex2f(w, -f(w / 2) + h / 2);
 		glVertex2f(0, h - hypothesis(0, firstHypothesisCoefficient, secondHypothesisCoefficient));
 		glVertex2f(w, h - hypothesis(w, firstHypothesisCoefficient, secondHypothesisCoefficient));
 	glEnd();
@@ -46,14 +45,6 @@ void display(void)
 		glVertex2f(examplesX[r] + 1, h - examplesY[r] + 1);
 		glEnd();
 	}
-
-
-
-	glColor3f(0, 1, 0);
-	// glBegin(GL_LINES);
-	// 	glVertex2f(0, -p.f(-w / 2) + h / 2);
-	// 	glVertex2f(w, -p.f(w / 2) + h / 2);
-	// glEnd();
 
 	glutSwapBuffers();
 }
@@ -87,63 +78,72 @@ void initialize(void)
 
 int main(int argc, char *argv[])
 {
-	
-	cout << "This program is trying to predict values based on examples. Now give me the number of examples: \n";
-	//cin >> numberOfExamples; //////////////////////////////////////////////////////////////////////////////////////////// Se decomenteaza AICI
-	
-	numberOfExamples = 4;
-
-	examplesX = new double [numberOfExamples];
-	examplesY = new double [numberOfExamples];
-	
-	int times = 0;
-	double n;
-	int counter = 0;
-	ifstream f("exemple.txt");
-	while (f >> n)
+	int cinText = 0;
+	cout << "This program is trying to predict values based on examples. Are you going to write the numbers or should I read them form exemple.txt?.\n Press 0 for writing or 1 for reading from exemple.txt!\n";
+	cin >> cinText;
+	if (cinText == 1)
 	{
-		cout << n << "\n";
-		if (counter == 0)
+		ifstream fs("exemple.txt");
+		char c;
+		while (fs.get(c))
 		{
-			examplesX[times / 2] = n;
-			counter = 1;
+			if (c == '\n')
+			++numberOfExamples;
 		}
-		else
+		fs.close();
+
+		ifstream f("exemple.txt");
+		cout << "Number of Exampels: " << numberOfExamples << "\n";
+
+		examplesX = new double [numberOfExamples];
+		examplesY = new double [numberOfExamples];
+		
+		int times = 0;
+		string n;
+		
+		while (getline(f, n))
 		{
-			examplesY[(times - 1) / 2] = n;
-			counter = 0;
+			int placeSubstring = n.find(", ") + 2;
+			//cout << "\n" << placeSubstring << "\n";
+			examplesX[times] = atof(n.substr(0, placeSubstring - 2).c_str());
+			examplesY[times] = atof(n.substr(placeSubstring).c_str());
+			times++;
+			// cout << "\nX = " << n.substr(0, placeSubstring - 2);
+			// cout << "\nY = " << n.substr(placeSubstring);
 		}
-		times++;
+		f.close();
+
+		cout << "These are the examples:\n";
+		for (int i = 0; i < numberOfExamples; i++)
+		{
+			cout << examplesX[i] << "\n";
+			cout << examplesY[i] << "\n";
+		}
+
 	}
-	f.close();
+	else
+	{
+		cout << "So far so good. Now give me the number of examples: \n";
+		cin >> numberOfExamples;
+		cout << "\nNow give me the examples:\n";
 
-	cout << "\n";
+		examplesX = new double [numberOfExamples];
+		examplesY = new double [numberOfExamples];
 
-
-
-	cout << "Now give me the examples:";
-	cout << "\n";
-
-	// for (int i = 0; i < numberOfExamples; i++) //////////////////////////////////////////////// Se decomenteaza AICI
-	// {
-	// 	double x;
-	// 	double y;
-	// 	cout << "x: ";
-	// 	cin >> x;
-	// 	examplesX[i] = x;
-	// 	cout << "\n";
-	// 	cout << "y: ";
-	// 	cin >> y;
-	// 	examplesY[i] = y;
-	// 	cout << "\n";
-	// }
-
-	// for (int i = 0; i < numberOfExamples; i++)
-	// {
-	// 	cout << examplesX[i] << "\n";
-	// 	cout << examplesY[i] << "\n";
-	// }
-
+		for (int i = 0; i < numberOfExamples; i++)
+		{
+			double x;
+			double y;
+			cout << "x: ";
+			cin >> x;
+			examplesX[i] = x;
+			cout << "\n";
+			cout << "y: ";
+			cin >> y;
+			examplesY[i] = y;
+			cout << "\n";
+		}
+	}
 
 
 	for (int q = 0; q < trainingsNumber; q++)
