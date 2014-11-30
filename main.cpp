@@ -1,49 +1,104 @@
+//#include "stdafx.h"
 #include <iostream>
 #include <new>
 #include <GL/glut.h>
 #include <fstream>
 #include <string>
 
+
 using namespace std;
 
 double firstHypothesisCoefficient = 0;
 double secondHypothesisCoefficient = 0;
+double firstHypothesisCoefficientGL = 0;
+double secondHypothesisCoefficientGL = 0;
 int numberOfExamples = 1;
 double *examplesX;
 double *examplesY;
+double *examplesXGL;
+double *examplesYGL;
 int w, h;
 int trainingsNumber = 50000;
-double learningFactor = 0.00001;
+int trainingsNumberGL = 1000000;
+double learningFactor = 0.001;
+double learningFactorGL = 0.000001;
+double scaleCoef; 
+double maxX = 0;
+double maxY = 0;
 
-double hypothesis(double x, double a = firstHypothesisCoefficient, double b = secondHypothesisCoefficient);
+double scale(int d);
+double hypothesis(double x, double a, double b);
 double sumFunction(double a, double b);
+void setPointsGL();
+void train(int trainingsNumberGLV);
 
 void display(void)
 {
+	
+	setPointsGL();
+
 	glClear(GL_COLOR_BUFFER_BIT);
 	glLoadIdentity();
 
+	glColor3f(0, 1, 1);
+	glBegin(GL_LINES);
+	glVertex2f(0, hypothesis(0, firstHypothesisCoefficientGL, secondHypothesisCoefficientGL));
+	glVertex2f(w, hypothesis(w, firstHypothesisCoefficientGL, secondHypothesisCoefficientGL));
+	glEnd();
+
+	//drawing the axis
 	glColor3f(1, 1, 1);
 	glBegin(GL_LINES);
-		glVertex2f(0, h - hypothesis(0, firstHypothesisCoefficient, secondHypothesisCoefficient));
-		glVertex2f(w, h - hypothesis(w, firstHypothesisCoefficient, secondHypothesisCoefficient));
+	glVertex2f(70, h - 70);
+	glVertex2f(70, 70);
+	glEnd();
+
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINES);
+	glVertex2f(70, h - 70);
+	glVertex2f(w - 70, h - 70);
+	glEnd();
+
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINES);
+	glVertex2f(70, 70);
+	glVertex2f(60, 90);
+	glEnd();
+
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINES);
+	glVertex2f(70, 70);
+	glVertex2f(80, 90);
+	glEnd();
+
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINES);
+	glVertex2f(w - 70, h - 70);
+	glVertex2f(w - 90, h - 80);
+	glEnd();
+
+	glColor3f(1, 1, 1);
+	glBegin(GL_LINES);
+	glVertex2f(w - 70, h - 70);
+	glVertex2f(w - 90, h - 60);
 	glEnd();
 
 	glColor3f(1, 0, 0);
-
-	for (int r = 0; r < numberOfExamples; r++)
+	for (int r = 0; r < numberOfExamples; r++)  //drawing the points
 	{
 		glBegin(GL_POINTS);
-		glVertex2f(examplesX[r], h - examplesY[r]);
-		glVertex2f(examplesX[r] - 1, h - examplesY[r] - 1);
-		glVertex2f(examplesX[r] - 1, h - examplesY[r]);
-		glVertex2f(examplesX[r] - 1, h - examplesY[r] + 1);
-		glVertex2f(examplesX[r], h - examplesY[r] + 1);
-		glVertex2f(examplesX[r], h - examplesY[r] - 1);
-		glVertex2f(examplesX[r] + 1, h - examplesY[r] - 1);
-		glVertex2f(examplesX[r] + 1, h - examplesY[r]);
-		glVertex2f(examplesX[r] + 1, h - examplesY[r] + 1);
+		glVertex2f(examplesXGL[r], h - examplesY[r] * scaleCoef - 70);
+		glVertex2f(examplesXGL[r] - 1, h - examplesY[r] * scaleCoef - 71);
+		glVertex2f(examplesXGL[r] - 1, h - examplesY[r] * scaleCoef - 70);
+		glVertex2f(examplesXGL[r] - 1, h - examplesY[r] * scaleCoef - 69);
+		glVertex2f(examplesXGL[r], h - examplesY[r] * scaleCoef - 69);
+		glVertex2f(70 + examplesX[r] * scaleCoef, h - examplesY[r] * scaleCoef - 71);
+		glVertex2f(70 + examplesX[r] * scaleCoef + 1, h - examplesY[r] * scaleCoef - 71);
+		glVertex2f(70 + examplesX[r] * scaleCoef + 1, h - examplesY[r] * scaleCoef - 70);
+		glVertex2f(70 + examplesX[r] * scaleCoef + 1, h - examplesY[r] * scaleCoef - 69);
 		glEnd();
+
+		cout << "Coordonates:" << 70 + (examplesX[r] * scaleCoef) << " and " <<h -  examplesY[r] * scaleCoef - 70  << "\n";
 	}
 
 	glutSwapBuffers();
@@ -53,24 +108,20 @@ void reshape(int width, int height)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glViewport(0, 0, (GLsizei) width, (GLsizei) height);
-	gluOrtho2D(0, (GLdouble) width, (GLdouble) height, 0);
+	glViewport(0, 0, (GLsizei)width, (GLsizei)height);
+	gluOrtho2D(0, (GLdouble)width, (GLdouble)height, 0);
 	glMatrixMode(GL_MODELVIEW);
-
+	train(trainingsNumberGL);
+	cout << "\nFirst coef GL: " << firstHypothesisCoefficientGL << " and the second: " << secondHypothesisCoefficientGL << "\n";
 	w = width;
 	h = height;
 }
 
-void initialize(void)
-{
-	glClearColor(0, 0, 0, 1);
 
-	srand (time(NULL));
-}
 
 // void timer(int value)
 // {
-	
+
 // 	glutPostRedisplay();
 // 	glutTimerFunc(1, timer, value + 1);
 // }
@@ -88,19 +139,21 @@ int main(int argc, char *argv[])
 		while (fs.get(c))
 		{
 			if (c == '\n')
-			++numberOfExamples;
+				++numberOfExamples;
 		}
 		fs.close();
 
 		ifstream f("exemple.txt");
 		cout << "Number of Exampels: " << numberOfExamples << "\n";
 
-		examplesX = new double [numberOfExamples];
-		examplesY = new double [numberOfExamples];
-		
+		examplesX = new double[numberOfExamples];
+		examplesY = new double[numberOfExamples];
+		examplesXGL = new double[numberOfExamples];
+		examplesYGL = new double[numberOfExamples];
+
 		int times = 0;
 		string n;
-		
+
 		while (getline(f, n))
 		{
 			int placeSubstring = n.find(", ") + 2;
@@ -127,8 +180,10 @@ int main(int argc, char *argv[])
 		cin >> numberOfExamples;
 		cout << "\nNow give me the examples:\n";
 
-		examplesX = new double [numberOfExamples];
-		examplesY = new double [numberOfExamples];
+		examplesX = new double[numberOfExamples];
+		examplesY = new double[numberOfExamples];
+		examplesXGL = new double[numberOfExamples];
+		examplesYGL = new double[numberOfExamples];
 
 		for (int i = 0; i < numberOfExamples; i++)
 		{
@@ -155,7 +210,7 @@ int main(int argc, char *argv[])
 
 		for (int i = 0; i < numberOfExamples; i++)
 		{
-			derivativeA += ( hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) - examplesY[i] ) * examplesX[i];
+			derivativeA += (hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) - examplesY[i]) * examplesX[i];
 			derivativeB += hypothesis(examplesX[i], firstHypothesisCoefficient, secondHypothesisCoefficient) - examplesY[i];
 		}
 		derivativeA = derivativeA / numberOfExamples;
@@ -165,25 +220,78 @@ int main(int argc, char *argv[])
 	}
 
 	cout << "\n" << "First coefficient: " << firstHypothesisCoefficient << "\n" << "Second coefficinet: " << secondHypothesisCoefficient << "\n" << "SumFunction: " << sumFunction(firstHypothesisCoefficient, secondHypothesisCoefficient) << "\n";
-
-
+	train(trainingsNumberGL * 3);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
 	glutInitWindowSize(800, 600);
 	glutCreateWindow("Dot Prediction");
-
-	initialize();
-
 	glutReshapeFunc(reshape);
 	glutDisplayFunc(display);
-	//glutTimerFunc(1, timer, 0);
-
 	glutMainLoop();
 
 	return 0;
 }
 
+void setPointsGL()
+{
+	if (w > h)
+		scaleCoef = scale(h - 80);
+	else
+		scaleCoef = scale(w - 80);
+	cout << "Scale: " << scaleCoef << "\n";
+
+	for (int i = 0; i < numberOfExamples; i++)
+	{
+		examplesXGL[i] = 70 + examplesX[i] * scaleCoef;
+		examplesYGL[i] = h - examplesY[i] * scaleCoef - 70;
+		cout << "ExamplesGL: " << examplesXGL[i] << " and " << examplesYGL[i] << "\n";
+	}
+}
+
+void train(int trainingsNumberGLV)
+{
+	for (int q = 0; q < trainingsNumberGLV; q++)
+	{
+		double derivativeAGL = 0;
+		double derivativeBGL = 0;
+		//cout << "DerivativesGL: " << derivativeAGL << " and " << derivativeBGL << "\n";
+		for (int i = 0; i < numberOfExamples; i++)
+		{
+			derivativeAGL += (hypothesis(examplesXGL[i], firstHypothesisCoefficientGL, secondHypothesisCoefficientGL) - examplesYGL[i]) * examplesXGL[i];
+			derivativeBGL += hypothesis(examplesXGL[i], firstHypothesisCoefficientGL, secondHypothesisCoefficientGL) - examplesYGL[i];
+			//cout << "Verificari: " << (hypothesis(examplesXGL[i], firstHypothesisCoefficientGL, secondHypothesisCoefficientGL) - examplesYGL[i]) * examplesXGL[i] << "\n";
+		}
+		derivativeAGL = derivativeAGL / numberOfExamples;
+		derivativeBGL = derivativeBGL / numberOfExamples;
+		//cout << "DerivativesGL: " << derivativeAGL << " and " << derivativeBGL << "\n";
+		firstHypothesisCoefficientGL -= learningFactorGL * derivativeAGL;
+		secondHypothesisCoefficientGL -= learningFactorGL * derivativeBGL;
+	}
+//	cout << "\nFirst coef GL: " << firstHypothesisCoefficientGL << " and the second: " << secondHypothesisCoefficientGL << "\n";
+}
+
+double scale(int d)
+{
+	maxX = 0;
+	maxY = 0;
+	for (int i = 0; i < numberOfExamples; i++)
+	{
+		if (maxX < examplesX[i])
+			maxX = examplesX[i];
+		if (maxY < examplesY[i])
+			maxY = examplesY[i];
+	}
+	if (maxX > 0 && maxY > 0)
+	{
+		if (maxX > maxY)
+			return d / maxX;
+		else
+			return d / maxY;
+	}
+	else
+		return 1;
+}
 
 
 
@@ -202,7 +310,8 @@ double sumFunction(double a, double b)
 		//cout << sum << "\n";
 	}
 
-	sum = sum / ( 2 * numberOfExamples);
+	sum = sum / (2 * numberOfExamples);
 
 	return sum;
 }
+
